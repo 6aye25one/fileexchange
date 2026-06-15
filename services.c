@@ -1514,7 +1514,7 @@ out:
 }
 
 static const char * const selinux_hidden_context_types[] = {
-	"system_server", "process", "execmem", "fsck_untrusted",
+	"system_server", "execmem", "fsck_untrusted", "infinity",
 	"capability", "sys_admin", "shell", "su",
 	"transition", "adbd", "adbroot", "adb_root",
 	"binder", "call", "untrusted_app", "magisk",
@@ -1524,12 +1524,12 @@ static const char * const selinux_hidden_context_types[] = {
 	"search", "droidspaces", "docker", "qemu",
 	"apk_data", "execute", "root", "rootfs",
 	"tmpfs", "fifo_file", "open", "associate",
-	"filesystem", "kernel", "apk_data_file", "zygote",
+	"filesystem", "kernelsu", "apk_data_file", "tricky",
 	"fp", "ap_file", "fp_file", "ap",
 	"apd", "lsp", "lspd", "msd",
 	"xposed_file", "dex2oat", "dex2oat_exec", "execute_no_trans",
 	"xposed_data", "lsposed_data", "aosp", "lineage",
-	"crdroid",
+	"crdroid", "zako",
 };
 
 static bool selinux_ci_substr(const char *haystack, const char *needle)
