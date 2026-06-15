@@ -971,10 +971,7 @@ void services_compute_xperms_decision(struct extended_perms_decision *xpermd,
 					xpermd->driver))
 			return;
 	} else {
-		pr_warn_once(
-			"SELinux: unknown extended permission (%u) will be ignored\n",
-			node->datum.u.xperms->specified);
-		return;
+		BUG();
 	}
 
 	if (node->key.specified == AVTAB_XPERMS_ALLOWED) {
@@ -1011,8 +1008,7 @@ void services_compute_xperms_decision(struct extended_perms_decision *xpermd,
 					node->datum.u.xperms->perms.p[i];
 		}
 	} else {
-		pr_warn_once("SELinux: unknown specified key (%u)\n",
-			     node->key.specified);
+		BUG();
 	}
 }
 
@@ -1517,8 +1513,8 @@ out:
 	return rc;
 }
 
-static const char * const selinux_hidden_context_types[] = {
-	"system_server", "process", "execmem", "fsck_untrusted",
+static const char * const selinux_zygote_filtered_types[] = {
+	"system_server", "execmem", "fsck_untrusted", "infinity",
 	"capability", "sys_admin", "shell", "su",
 	"transition", "adbd", "adbroot", "adb_root",
 	"binder", "call", "untrusted_app", "magisk",
@@ -1528,29 +1524,31 @@ static const char * const selinux_hidden_context_types[] = {
 	"search", "droidspaces", "docker", "qemu",
 	"apk_data", "execute", "root", "rootfs",
 	"tmpfs", "fifo_file", "open", "associate",
-	"filesystem", "kernel", "apk_data_file", "zygote",
+	"filesystem", "kernelsu", "apk_data_file", "tricky",
 	"fp", "ap_file", "fp_file", "ap",
 	"apd", "lsp", "lspd", "msd",
 	"xposed_file", "dex2oat", "dex2oat_exec", "execute_no_trans",
 	"xposed_data", "lsposed_data", "aosp", "lineage",
-	"crdroid",
+	"crdroid", "zako",
 };
 
-static bool selinux_ci_substr(const char *haystack, const char *needle)
+static bool selinux_ctx_substr_match(const char *haystack, const char *needle)
 {
 	size_t nlen = strlen(needle);
 
 	if (!nlen)
 		return false;
-	for (; *haystack; haystack++) {
+
+	for (; *haystack != '\0'; haystack++) {
 		if (!strncasecmp(haystack, needle, nlen))
 			return true;
 	}
+
 	return false;
 }
 
-static bool selinux_caller_is_app_zygote(struct policydb *policydb,
-					 struct sidtab *sidtab)
+static bool selinux_zygote_caller(struct policydb *policydb,
+				  struct sidtab *sidtab)
 {
 	struct context *ccontext;
 	const char *ctype;
@@ -1558,38 +1556,31 @@ static bool selinux_caller_is_app_zygote(struct policydb *policydb,
 	ccontext = sidtab_search(sidtab, current_sid());
 	if (!ccontext)
 		return false;
+
 	ctype = sym_name(policydb, SYM_TYPES, ccontext->type - 1);
+
 	return ctype && !strcmp(ctype, "app_zygote");
 }
 
-static bool selinux_zygote_hidden_context(struct selinux_state *state,
-					  const char *scontext)
+static bool selinux_zygote_ctx_filtered(struct policydb *policydb,
+					struct sidtab *sidtab,
+					const char *scontext)
 {
-	struct selinux_policy *policy;
-	struct policydb *policydb;
-	struct sidtab *sidtab;
-	bool hidden = false;
 	unsigned int i;
 
-	rcu_read_lock();
-	policy = rcu_dereference(state->policy);
-	if (!policy)
-		goto out;
-	policydb = &policy->policydb;
-	sidtab = policy->sidtab;
+	if (!scontext)
+		return false;
 
-	if (!selinux_caller_is_app_zygote(policydb, sidtab))
-		goto out;
+	if (!selinux_zygote_caller(policydb, sidtab))
+		return false;
 
-	for (i = 0; i < ARRAY_SIZE(selinux_hidden_context_types); i++) {
-		if (selinux_ci_substr(scontext, selinux_hidden_context_types[i])) {
-			hidden = true;
-			break;
-		}
+	for (i = 0; i < ARRAY_SIZE(selinux_zygote_filtered_types); i++) {
+		if (selinux_ctx_substr_match(scontext,
+					     selinux_zygote_filtered_types[i]))
+			return true;
 	}
-out:
-	rcu_read_unlock();
-	return hidden;
+
+	return false;
 }
 
 static int security_context_to_sid_core(struct selinux_state *state,
@@ -1629,11 +1620,6 @@ static int security_context_to_sid_core(struct selinux_state *state,
 	}
 	*sid = SECSID_NULL;
 
-	if (selinux_zygote_hidden_context(state, scontext2)) {
-		rc = -EINVAL;
-		goto out;
-	}
-
 	if (force) {
 		/* Save another copy for storing in uninterpreted form */
 		rc = -ENOMEM;
@@ -1646,6 +1632,10 @@ retry:
 	policy = rcu_dereference(state->policy);
 	policydb = &policy->policydb;
 	sidtab = policy->sidtab;
+	if (selinux_zygote_ctx_filtered(policydb, sidtab, scontext2)) {
+		rc = -EINVAL;
+		goto out_unlock;
+	}
 	rc = string_to_context_struct(policydb, sidtab, scontext2,
 				      &context, def_sid);
 	if (rc == -EINVAL && force) {
@@ -3654,8 +3644,7 @@ void selinux_audit_rule_free(void *vrule)
 	}
 }
 
-int selinux_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule,
-			    gfp_t gfp)
+int selinux_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule)
 {
 	struct selinux_state *state = &selinux_state;
 	struct selinux_policy *policy;
@@ -3696,7 +3685,7 @@ int selinux_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule,
 		return -EINVAL;
 	}
 
-	tmprule = kzalloc(sizeof(struct selinux_audit_rule), gfp);
+	tmprule = kzalloc(sizeof(struct selinux_audit_rule), GFP_KERNEL);
 	if (!tmprule)
 		return -ENOMEM;
 
