@@ -28,6 +28,9 @@ static const char * const proc_fd_redirect_keys[] = {
 	"infinity",
 	"avium",
 	"pixel",
+	"experience",
+	"aosp",
+	"omnirom",
 };
 
 static bool proc_fd_str_contains_ci(const char *haystack, const char *needle)
