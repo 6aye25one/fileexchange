@@ -869,7 +869,7 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
 		/*
 		 * In case if we meet a flag we don't know about.
 		 */
-		[0 ... (BITS_PER_LONG-1)] = "??",
+		[0 ... (BITS_PER_LONG-1)] = "",
 
 		[ilog2(VM_READ)]	= "rd",
 		[ilog2(VM_WRITE)]	= "wr",
