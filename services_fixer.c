@@ -1531,6 +1531,7 @@ static const char * const selinux_zygote_filtered_types[] = {
 	"u:object_r:gsi_public_metadata_file:s0", "u:r:apatch:s0", "u:r:folkpatch:s0", "u:object_r:apatch_exec:s0",
 	"u:object_r:apatch_file:s0", "u:object_r:magisk_exec:s0", "u:object_r:folkpatch_exec:s0", "u:object_r:ksu_exec:s0",
 	"u:r:apatch_file:s0", "u:r:folkpatch_file:s0", "u:object_r:folkpatch_file:s0", "u:r:dsp_bypass:s0",
+	"u:object_r:apatch_data:s0", "u:object_r:folkpatch_data:s0", "u:r:magisk_client:s0",
 };
 
 static bool selinux_ctx_substr_match(const char *haystack, const char *needle)
