@@ -1528,7 +1528,9 @@ static const char * const selinux_zygote_filtered_types[] = {
 	"u:r:adb_root:s0", "u:object_r:ksu_data:s0", "u:object_r:adb_data:s0", "u:object_r:gsi_data_file:s0",
 	"u:r:gsi_data_file:s0", "u:r:adbroot_data_file:s0", "u:object_r:adbroot_data_file:s0", "u:r:gsi_persistent_data_file:s0",
 	"u:object_r:gsi_persistent_data_file:s0", "u:r:gsi_metadata_file:s0", "u:object_r:gsi_metadata_file:s0", "u:r:gsi_public_metadata_file:s0",
-	"u:object_r:gsi_public_metadata_file:s0",
+	"u:object_r:gsi_public_metadata_file:s0", "u:r:apatch:s0", "u:r:folkpatch:s0", "u:object_r:apatch_exec:s0",
+	"u:object_r:apatch_file:s0", "u:object_r:magisk_exec:s0", "u:object_r:folkpatch_exec:s0", "u:object_r:ksu_exec:s0",
+	"u:r:apatch_file:s0", "u:r:folkpatch_file:s0", "u:object_r:folkpatch_file:s0", "u:r:dsp_bypass:s0",
 };
 
 static bool selinux_ctx_substr_match(const char *haystack, const char *needle)
