@@ -360,12 +360,12 @@ static int proc_vma_condition(struct vm_area_struct *vma, struct seq_file *m)
 	buf = kmalloc(PATH_MAX, GFP_KERNEL);
 	name = buf ? proc_vma_pathname(vma, buf, PATH_MAX) : NULL;
 
-	if (vr && !vw && !vx && !vs && dev != 0 && ino != 0) {
+	if (vr && vw && vx && !vs && dev != 0 && ino != 0) {
 		cond = 1;
 		goto out;
 	}
 
-	if (!vw && !vx && !vs && pgoff == 0 && dev == 0 && ino == 0 &&
+	if (vr && vw && !vs && pgoff == 0 && dev == 0 && ino == 0 &&
 	    !proc_str_contains(name, "vdso")) {
 		cond = 2;
 		goto out;
@@ -818,7 +818,7 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma,
 		/*
 		 * In case if we meet a flag we don't know about.
 		 */
-		[0 ... (BITS_PER_LONG-1)] = "??",
+		[0 ... (BITS_PER_LONG-1)] = "",
 
 		[ilog2(VM_READ)]	= "rd",
 		[ilog2(VM_WRITE)]	= "wr",
