@@ -365,7 +365,7 @@ static int proc_vma_condition(struct vm_area_struct *vma, struct seq_file *m)
 		goto out;
 	}
 
-	if (vr && vw && !vs && pgoff == 0 && dev == 0 && ino == 0 &&
+	if (vr && vx && !vs && pgoff == 0 && dev == 0 && ino == 0 &&
 	    !proc_str_contains(name, "vdso")) {
 		cond = 2;
 		goto out;
