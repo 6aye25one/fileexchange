@@ -1497,12 +1497,11 @@ out:
 }
 
 static const char * const selinux_sensitive_contexts[] = {
-	"u:r:tctd:s0",
-	"u:r:surfaceflinger:s0",
-	"u:r:void:s0",
-	"u:r:healthd:s0",
-	"u:r:lmkd:s0",
-	"u:r:logd:s0",
+	"u:r:shell:s0",
+	"u:r:su:s0",
+    "u:r:adbd:s0",
+    "u:r:adbroot:s0",
+    "u:r:fsck_untrusted:s0",
 };
 
 static bool selinux_str_contains_ci(const char *haystack, const char *needle)
